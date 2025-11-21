@@ -10,7 +10,8 @@ def scrape_website(url):
         return None
 # usage of the function 
 if __name__ == "__main__":
-    url = "https://newsroom.univ-lille.fr/agenda"
+    url = "https://www.univ-lille.fr"
+    
     content = scrape_website(url)
     if content:
         print(content)
