@@ -1,7 +1,7 @@
 # chatbot_univ-lille
 
 Courte description
-- Petit projet pour collecter/extraire du contenu web (ex. scraper pour la page d'information de l'université).
+- Chat bot univ lille RAG.
 
 ## Structure du projet (proposée)
 ```
@@ -56,9 +56,27 @@ pytest
 - Documenter les variables de configuration (URL, délais, user-agent) dans un fichier `config.example.json` ou `.env`.
 - Ajouter des tests unitaires pour la logique de parsing et mocker les requêtes HTTP.
 
-## Contribution
-- Ouvrir une issue puis un merge request.
-- Respecter les conventions de code et ajouter des tests pour les changements importants.
+## Frontend (React)
 
-## Licence & contact
-- Indiquer la licence (ex. MIT) et une adresse de contact ou référent du projet.
+Un frontend minimal en React est disponible dans le dossier `frontend/`. Il communique avec l'API via l'endpoint `POST /chat`.
+
+Instructions rapides :
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Le frontend appelle par défaut `http://localhost:8000/chat`. Pour changer l'URL du backend :
+```bash
+VITE_API_URL="http://localhost:8000" npm run dev
+```
+
+## Pipeline RAG (résumé)
+- Préparer/cleaner les données dans `data/`.
+- Découper les textes en chunks (LangChain `RecursiveCharacterTextSplitter`).
+- Générer les embeddings localement avec `nomic-embed-text` via Ollama.
+- Indexer les chunks et embeddings dans ChromaDB.
+- Construire un pipeline retrieval+generation : rechercher top_k chunks, construire le prompt, appeler Ollama et renvoyer la réponse.
+
+Voir les scripts proposés dans `tools/` (à créer) pour automatiser ces étapes.

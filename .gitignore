@@ -1,1 +1,22 @@
+# Virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Environment files
+.env
+
+# Data directory (scraped data)
+data/
+
+# Editor / OS files
+.vscode/
+.idea/
+.DS_Store
+
+# Logs
+.log
 .venv
+pipo 

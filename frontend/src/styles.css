@@ -1,0 +1,10 @@
+body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 0; }
+.app { max-width: 900px; margin: 2rem auto; padding: 1rem; }
+header h1 { margin: 0 0 1rem 0; }
+.query-form { display: flex; flex-direction: column; gap: 0.5rem; }
+textarea { font-size: 1rem; padding: 0.5rem; }
+button { align-self: flex-start; padding: 0.5rem 1rem; }
+.answer { background: #f7f7f7; padding: 1rem; margin-top: 1rem; }
+.sources { margin-top: 1rem; }
+.error { color: red; margin-top: 1rem; }
+pre { white-space: pre-wrap; word-break: break-word; }
