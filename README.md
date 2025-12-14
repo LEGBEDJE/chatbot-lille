@@ -1,7 +1,7 @@
 # chatbot_univ-lille
 
 Courte description
-- Chat bot univ lille RAG.
+- Chat bot univ lille RAG avec scrapping.
 
 ## Structure du projet (proposée)
 ```
