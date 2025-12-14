@@ -41,19 +41,33 @@ def answer_query(query: str, top_k: int = 3, model: str = "Mistral") -> Dict[str
     # build context
     context = "\n---\n".join([f"Source: {m.get('source') if m else ids[i]}\n{docs[i]}" for i in range(len(docs))])
 
+    if not docs:
+        # no retrieved context
+        context = ""  # empty context
+
     prompt = f"You are a helpful assistant. Use the following context to answer the question.\n\nCONTEXT:\n{context}\n\nQuestion: {query}\nAnswer concisely and mention which sources you used."
 
     resp = query_ollama(prompt, model=model, stream=False)
 
-    # try to extract text-like response
+    # try to extract text-like response, supporting common Ollama shapes
     answer = None
     if isinstance(resp, dict):
-        # common keys
-        for k in ("text", "output"):
+        # check common keys
+        for k in ("response", "text", "output", "answer"):
             if k in resp and isinstance(resp[k], str):
                 answer = resp[k]
                 break
+        # sometimes the useful string is nested under 'response' -> 'output' or similar
+        if answer is None and "response" in resp and isinstance(resp["response"], dict):
+            # flatten possible nested structures
+            nested = resp["response"]
+            for k in ("text", "output", "answer"):
+                if k in nested and isinstance(nested[k], str):
+                    answer = nested[k]
+                    break
+
     if answer is None:
+        # fallback to stringifying the whole response
         answer = str(resp)
 
-    return {"answer": answer, "chunks": list(zip(ids, docs, metadatas))}
+    return {"answer": answer, "chunks": list(zip(ids, docs, metadatas)), "raw_llm": resp, "retrieval": results}

@@ -51,6 +51,8 @@ def _extract_text(resp: Dict[str, Any]) -> str:
     return str(resp)
 
 
+
+
 @app.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
     """Simple chat endpoint that forwards the prompt to a local Ollama instance.
@@ -63,9 +65,14 @@ def chat(req: ChatRequest):
     # Use RAG pipeline: retrieval + generation
     rag_res = answer_query(req.query, top_k=req.top_k, model="Mistral")
     answer = rag_res.get("answer")
-    chunks = rag_res.get("chunks")
+    chunks = rag_res.get("chunks") or []
+    raw_llm = rag_res.get("raw_llm")
+    retrieval = rag_res.get("retrieval")
 
-    return ChatResponse(answer=answer, raw={}, sources=chunks)
+    # Include raw LLM response and retrieval info for debugging / transparency
+    raw = {"llm": raw_llm, "retrieval": retrieval}
+
+    return ChatResponse(answer=answer, raw=raw, sources=chunks)
 
 
 if __name__ == "__main__":
