@@ -7,6 +7,7 @@ from typing import Any, Dict, List
 import os
 from sentence_transformers import SentenceTransformer
 import chromadb
+from chromadb.config import Settings
 from .test_llama import query_ollama
 
 EMBED_MODEL_LOCAL = "all-MiniLM-L6-v2"
@@ -14,7 +15,20 @@ CHROMA_COLLECTION = os.environ.get("CHROMA_COLLECTION", "chatbot")
 
 
 def _get_chroma_collection(collection_name: str = CHROMA_COLLECTION):
-    client = chromadb.Client()
+    # Use the same persistence directory as indexer (default ./chroma_db)
+    persist_dir = os.environ.get("CHROMA_PERSIST_DIR", "./chroma_db")
+    client = None
+    try:
+        client = chromadb.Client(persist_directory=str(persist_dir))
+    except Exception:
+        try:
+            settings = Settings(chroma_db_impl="duckdb+parquet", persist_directory=str(persist_dir))
+            client = chromadb.Client(settings)
+        except Exception as e:
+            raise RuntimeError(
+                "Could not construct a Chroma client. If you have an old Chroma database, run 'pip install chroma-migrate' and use chroma-migrate to upgrade, see https://docs.trychroma.com/deployment/migration. Original error: "
+                + str(e)
+            )
     try:
         return client.get_collection(collection_name)
     except Exception:
