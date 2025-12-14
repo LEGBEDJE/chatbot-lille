@@ -101,9 +101,59 @@ python3 tools/index_chroma.py --input data/chunks_emb.jsonl --collection chatbot
 ```bash
 export OLLAMA_HOST="http://localhost:11434"
 uvicorn app.api:app --reload --port 8000
-curl -X POST "http://localhost:8000/chat" -H "Content-Type: application/json" -d '{"query": "Quand commencent les inscriptions?"}'
+# Exemple de requête
+curl -s -X POST "http://localhost:8000/chat" -H "Content-Type: application/json" -d '{"query": "Quand commencent les inscriptions?"}' | jq
 ```
 
 Remarque sur les embeddings :
 - Le code fourni utilise `sentence-transformers` (`all-MiniLM-L6-v2`) par défaut pour la génération d'embeddings (rapide et fiable localement).
 - Si vous préférez utiliser `nomic-embed-text` via Ollama, remplacez la logique d'embedding dans `tools/embeddings.py` et `app/rag.py` pour appeler votre instance Ollama (après `ollama pull nomic-embed-text`).
+
+### Résolution des problèmes courants
+
+- `ModuleNotFoundError: No module named 'langchain.text_splitter'` : installez `langchain` ou utilisez le fallback intégré. Pour installer :
+```bash
+pip install langchain
+# ou réinstaller toutes les dépendances
+pip install -r requirements.txt
+```
+
+- `ValueError: You are using a deprecated configuration of Chroma.` : votre installation Chroma est incompatible avec l'ancienne configuration. Si vous n'avez pas de données à migrer, installez la nouvelle version de chromadb et assurez-vous d'utiliser la nouvelle construction du client (`chromadb.Client(persist_directory=...)`). Si vous avez des données, suivez la migration :
+```bash
+pip install chroma-migrate
+chroma-migrate
+```
+
+- Si `tools/index_chroma.py` ou `app/rag.py` renvoient des erreurs lors de l'ouverture du client Chroma, vérifiez la variable d'environnement `CHROMA_PERSIST_DIR` (par défaut `./chroma_db`) et relancez l'indexation :
+```bash
+python3 tools/index_chroma.py --input data/chunks_emb.jsonl --persist_dir ./chroma_db --collection chatbot
+```
+
+- Pour debug de la recherche sans appeler l'LLM : vérifiez le champ `raw.retrieval` renvoyé par `/chat` (il contient `ids`, `documents`, `metadatas`, et parfois `distances`).
+
+### Commandes complètes recommandées (ordre)
+```bash
+# 1) Créer venv et installer deps
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# 2) Chunker
+python3 tools/chunk_data.py --input_dir data --output data/chunks.jsonl
+
+# 3) Générer embeddings
+python3 tools/embeddings.py --input data/chunks.jsonl --output data/chunks_emb.jsonl
+
+# 4) Indexer (créera ./chroma_db)
+python3 tools/index_chroma.py --input data/chunks_emb.jsonl --persist_dir ./chroma_db --collection chatbot
+
+# 5) Lancer l'API
+export CHROMA_PERSIST_DIR=./chroma_db
+export OLLAMA_HOST="http://localhost:11434"
+uvicorn app.api:app --reload --port 8000
+
+# 6) Lancer le frontend (optionnel)
+cd frontend
+npm install
+npm run dev
+```
