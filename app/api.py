@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from .test_llama import query_ollama
+from .rag import answer_query
 
 logging.basicConfig(level=logging.INFO)
 
@@ -59,11 +60,12 @@ def chat(req: ChatRequest):
     """
     prompt = f"Réponds de façon concise. Question:\n{req.query}\n"
 
-    # Call local Ollama via helper
-    resp = query_ollama(prompt, model="Mistral", stream=False)
-    text = _extract_text(resp)
+    # Use RAG pipeline: retrieval + generation
+    rag_res = answer_query(req.query, top_k=req.top_k, model="Mistral")
+    answer = rag_res.get("answer")
+    chunks = rag_res.get("chunks")
 
-    return ChatResponse(answer=text, raw=resp, sources=None)
+    return ChatResponse(answer=answer, raw={}, sources=chunks)
 
 
 if __name__ == "__main__":

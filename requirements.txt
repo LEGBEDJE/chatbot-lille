@@ -4,3 +4,7 @@ python-dotenv
 pytest
 fastapi
 uvicorn[standard]
+langchain
+chromadb
+sentence-transformers
+numpy

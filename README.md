@@ -78,5 +78,32 @@ VITE_API_URL="http://localhost:8000" npm run dev
 - Générer les embeddings localement avec `nomic-embed-text` via Ollama.
 - Indexer les chunks et embeddings dans ChromaDB.
 - Construire un pipeline retrieval+generation : rechercher top_k chunks, construire le prompt, appeler Ollama et renvoyer la réponse.
+Voir les scripts proposés dans `tools/` pour automatiser ces étapes (chunking, embeddings, indexation) et `app/rag.py` pour le pipeline RAG.
 
-Voir les scripts proposés dans `tools/` (à créer) pour automatiser ces étapes.
+Exemples d'utilisation :
+
+1) Chunker les fichiers `data/*.txt` :
+```bash
+python3 tools/chunk_data.py --input_dir data --output data/chunks.jsonl
+```
+
+2) Générer les embeddings (local fallback avec `sentence-transformers`) :
+```bash
+python3 tools/embeddings.py --input data/chunks.jsonl --output data/chunks_emb.jsonl
+```
+
+3) Indexer dans ChromaDB :
+```bash
+python3 tools/index_chroma.py --input data/chunks_emb.jsonl --collection chatbot
+```
+
+4) Lancer l'API (FastAPI) et poser des questions via `/chat` (la route utilise désormais le pipeline RAG) :
+```bash
+export OLLAMA_HOST="http://localhost:11434"
+uvicorn app.api:app --reload --port 8000
+curl -X POST "http://localhost:8000/chat" -H "Content-Type: application/json" -d '{"query": "Quand commencent les inscriptions?"}'
+```
+
+Remarque sur les embeddings :
+- Le code fourni utilise `sentence-transformers` (`all-MiniLM-L6-v2`) par défaut pour la génération d'embeddings (rapide et fiable localement).
+- Si vous préférez utiliser `nomic-embed-text` via Ollama, remplacez la logique d'embedding dans `tools/embeddings.py` et `app/rag.py` pour appeler votre instance Ollama (après `ollama pull nomic-embed-text`).
